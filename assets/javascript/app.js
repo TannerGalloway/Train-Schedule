@@ -21,9 +21,10 @@ $( document ).ready(function() {
   var diffTime;
   var tRemainder;
   var MinutesTillTrain;
-  var nextTrain;
-
-
+  var trainInfo = [];
+  var trainEntries = 0;
+  
+setInterval(TrainInfoUpdate, 30000);
   
   $("#addTrain").on("click", function(event)
   {
@@ -36,8 +37,7 @@ $( document ).ready(function() {
       firstTrainTime = $("#trainTimeInput").val().trim();
       frequency = $("#frequencyInput").val().trim();
 
-
-      // First Time (pushed back 1 year to make sure it comes before current time)
+      // First Time (pushed back 1 day to make sure it comes before current time)
       firstTrainTimeConverted = moment(firstTrainTime, "HH:mm").subtract(1, "days");
     
       // Current Time
@@ -66,31 +66,56 @@ $( document ).ready(function() {
       database.ref().push({
         TrainName: trainName,
         Destination: destination,
-        Frequency: frequency,
-        MinutesTillTrain: MinutesTillTrain,
-        NextTrain: nextTrain
+        FirstTrainTime: firstTrainTime,
+        Frequency: frequency
     }); 
 
   });
-
+  
+   
 
   database.ref().on("child_added", function(snapshot)
   {
-    console.log(snapshot.val());
-
+    //put info from the database into an array
+    trainInfo.push(snapshot.val());
+    
     var newInfoRow = $("<tr>").append
     (
       $("<td>").text(snapshot.val().TrainName),
       $("<td>").text(snapshot.val().Destination),
       $("<td>").text(snapshot.val().Frequency),
-      $("<td>").text(snapshot.val().NextTrain),
-      $("<td>").text(snapshot.val().MinutesTillTrain)
+      $("<td>").text(nextTrain).attr("id", "NextArival" + trainEntries),
+      $("<td>").text(MinutesTillTrain).attr("id", "MinsAway" + trainEntries)
     );
-    
-
       $("#trainTable").append(newInfoRow);
-    
+      trainEntries++;
   });
-  
+
+    function TrainInfoUpdate()
+    {
+      for(i = 0; i < trainInfo.length; i++)
+      {
+        // First Time (pushed back 1 year to make sure it comes before current time)
+        firstTrainTimeConverted = moment(trainInfo[i].FirstTrainTime, "HH:mm").subtract(1, "days");
+        
+        // // Current Time
+        currentTime = moment().format("hh:mm A");
+       
+        // // Difference between the times
+        diffTime = moment().diff(firstTrainTimeConverted, "minutes");
+
+        // Time apart (remainder)
+        tRemainder = diffTime % trainInfo[i].Frequency;
+
+        //  // Minute Until Train
+         MinutesTillTrain = trainInfo[i].Frequency - tRemainder;
+
+        //  // Next Train
+        nextTrain = moment().add(MinutesTillTrain, "minutes").format("hh:mm A");
+
+        $("#NextArival" + i).text(nextTrain);
+        $("#MinsAway" + i).text(MinutesTillTrain);
+      }
+    }
 
 });
