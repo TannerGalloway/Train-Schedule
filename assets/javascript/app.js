@@ -23,9 +23,11 @@ $( document ).ready(function() {
   var MinutesTillTrain;
   var trainInfo = [];
   var trainEntries = 0;
+  var nextTrain;
   
 setInterval(TrainInfoUpdate, 30000);
   
+
   $("#addTrain").on("click", function(event)
   {
       //make page not reload on form submit click
@@ -72,13 +74,14 @@ setInterval(TrainInfoUpdate, 30000);
 
   });
   
-   
 
   database.ref().on("child_added", function(snapshot)
   {
     //put info from the database into an array
     trainInfo.push(snapshot.val());
-    
+
+    //update current data
+    TrainInfoUpdate();
     var newInfoRow = $("<tr>").append
     (
       $("<td>").text(snapshot.val().TrainName),
@@ -90,6 +93,7 @@ setInterval(TrainInfoUpdate, 30000);
       $("#trainTable").append(newInfoRow);
       trainEntries++;
   });
+
 
     function TrainInfoUpdate()
     {
@@ -117,5 +121,4 @@ setInterval(TrainInfoUpdate, 30000);
         $("#MinsAway" + i).text(MinutesTillTrain);
       }
     }
-
 });
